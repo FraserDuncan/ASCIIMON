@@ -80,9 +80,16 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.32
+    Version 0.33
     """)
     msvcrt.getch()  # Wait for key press
+
+def get_movement_key():
+    """Waits for a single key press and returns the corresponding movement."""
+    key = msvcrt.getch().decode("utf-8").lower()  # Read key press instantly
+    if key in ["w", "a", "s", "d"]:
+        return key
+    return None  # Ignore invalid keys
 
 # Function to render health bars
 def render_health(name, health, max_health):
@@ -278,13 +285,13 @@ def main():
     display_title()
     trainer_name, player_pokemon, player_nickname = choose_pokemon()
     print(f"\n🌟 Your journey begins with {player_pokemon}! 🌟")
-    msvcrt.getch()  # Wait for key press before starting
 
     while True:
         display_map()
-        move = input("\nMove (W/A/S/D): ").strip().lower()
-        move_player(move)  # Move the player
-        encounter_pokemon()  # Check for wild Pokémon ONLY in grass
+        move = get_movement_key()  # Get a key press
+        if move:
+            move_player(move)  # Move instantly if valid
+            encounter_pokemon()  # Check for wild Pokémon ONLY in grass
 
 if __name__ == "__main__":
     main()
