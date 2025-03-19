@@ -59,7 +59,7 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.20
+    Version 0.27
     """)
     msvcrt.getch()  # Wait for key press
 
@@ -72,9 +72,11 @@ def render_health(name, health, max_health):
     return f"{name}\n[{health_bar}] {health}/{max_health}\n"
 
 # Function to display Pokémon battle scene with health bars
-def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health):
+def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health, last_action_player, last_action_enemy):
     os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
-    print(f"🌿🔥💧⚡ A wild {enemy_pokemon} appeared! 🌿🔥💧⚡\n")
+    
+    # Show the last two moves at the top
+    print(f"{last_action_player}\n{last_action_enemy}\n")
 
     # Use the player's custom Pokémon nickname instead of the default name
     player_health_bar = render_health(player_nickname, player_health, pokemon_data[player_pokemon]["max_health"]).split("\n")
@@ -89,7 +91,7 @@ def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_hea
         enemy_line = enemy_health_bar[i] if i < len(enemy_health_bar) else ""
         print(f"{player_line:<15}{' ' * 10}{enemy_line}")
 
-    print("\n")
+    print()
 
     # Print Pokémon ASCII art
     for i in range(max(len(player_art), len(enemy_art))):
@@ -125,10 +127,12 @@ def choose_pokemon():
         if choice in starters:
             print(f"\nYou chose {choice}!")
             
-            # Ask for Pokémon nickname
-            nickname = input(f"Would you like to give your {choice} a nickname? (Press Enter to skip): ").strip()
-            if nickname == "":
-                nickname = choice  # Keep default name if no nickname is given
+            # **Force naming the Pokémon**
+            while True:
+                nickname = input(f"Give your {choice} a nickname: ").strip()
+                if nickname:  # Ensures the name isn't empty
+                    break
+                print("⚠ You must enter a name for your Pokémon!")
             
             print(f"\n{trainer_name}, your Pokémon {nickname} is ready for battle!")
             return trainer_name, choice, nickname
@@ -148,8 +152,11 @@ def display_map():
 
 # Function to simulate a Pokémon battle
 def fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health):
+    last_action_player = f"A wild {enemy_pokemon} appeared!"  # Default start message
+    last_action_enemy = ""
+
     while player_health > 0 and enemy_health > 0:
-        display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health)
+        display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health, last_action_player, last_action_enemy)
 
         print("\nYour available moves:")
         for i, move in enumerate(pokemon_data[player_pokemon]["moves"], 1):
@@ -158,41 +165,50 @@ def fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health):
         action = input("Choose a move or (R)un: ").strip().lower()
         if action.isdigit() and 1 <= int(action) <= len(pokemon_data[player_pokemon]["moves"]):
             chosen_move = pokemon_data[player_pokemon]["moves"][int(action) - 1]
-            print(f"\nYour {player_pokemon} used {chosen_move}!")
-            time.sleep(2)  # Delay before result
+            last_action_player = f"\n{player_nickname} used {chosen_move}!"
             
+            # Determine if the enemy dodges
             if random.randint(1, 2) == 1:
                 enemy_health -= 4  # Fixed damage for now
                 if enemy_health <= 0:
-                    print(f"\n🎉 You defeated {enemy_pokemon}! 🎉")
+                    last_action_player = f"\n🎉 {enemy_pokemon} fainted! You win! 🎉"
+                    last_action_enemy = ""
+                    time.sleep(2)  # Single delay before refreshing
+                    display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health, last_action_player, last_action_enemy)
                     msvcrt.getch()  # Wait for key press
                     return
             else:
-                print(f"\n{enemy_pokemon} dodged the attack!")
+                last_action_player = f"\n{player_nickname} used {chosen_move}, but {enemy_pokemon} dodged it!"
 
-            time.sleep(2)  # Delay before enemy move
-            
+            # Enemy's turn
             if enemy_health > 0:
                 enemy_move = random.choice(pokemon_data[enemy_pokemon]["moves"])
-                print(f"{enemy_pokemon} used {enemy_move}!")
-                time.sleep(2)  # Delay before checking dodge
-                
-                # **NEW DODGE MECHANIC**
+                last_action_enemy = f"\n{enemy_pokemon} used {enemy_move}!"
+
+                # Determine if the player dodges
                 if random.randint(1, 2) == 1:  # 50% chance to dodge
-                    print(f"\n🙌 Your {player_pokemon} dodged the attack! 🙌")
+                    last_action_enemy += f"\n🙌 {player_nickname} dodged the attack! 🙌"
                 else:
-                    player_health -= 4  # Fixed damage for now
-                    print(f"\n💥 {player_pokemon} took damage! 💥")
+                    player_health -= 4  # Fixed damage, but no unnecessary message
 
         elif action == "r":
-            print("\n🏃 You ran away safely! 🏃")
+            last_action_player = f"\n🏃 {trainer_name} ran away safely! 🏃"
+            last_action_enemy = ""
+            time.sleep(2)  # Single delay before refreshing
+            display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health, last_action_player, last_action_enemy)
             msvcrt.getch()  # Wait for key press
             return
         else:
-            print("\nInvalid choice. Try again.")
+            last_action_player = "\nInvalid choice. Try again."
+
+        # **SINGLE 2-SECOND DELAY BEFORE REFRESHING**
+        time.sleep(2)
 
     if player_health <= 0:
-        print("\n💀 Your Pokémon fainted! You blacked out! 💀")
+        last_action_player = f"\n💀 {player_nickname} fainted! You blacked out! 💀"
+        last_action_enemy = ""
+        time.sleep(2)  # Single delay before refreshing
+        display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health, last_action_player, last_action_enemy)
         msvcrt.getch()
 
 # Main game loop
