@@ -46,6 +46,15 @@ pokemon_data = {
         """
     }
 }
+move_data = {
+    "Tackle": {"power": 40, "accuracy": 95},
+    "Vine Whip": {"power": 45, "accuracy": 90},
+    "Scratch": {"power": 40, "accuracy": 95},
+    "Ember": {"power": 40, "accuracy": 85},
+    "Water Gun": {"power": 40, "accuracy": 90},
+    "Quick Attack": {"power": 40, "accuracy": 100},
+    "Thunder Shock": {"power": 40, "accuracy": 90}
+}
 
 pokemon_list = list(pokemon_data.keys())  # List of available Pokémon
 
@@ -59,7 +68,7 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.27
+    Version 0.30
     """)
     msvcrt.getch()  # Wait for key press
 
@@ -160,16 +169,18 @@ def fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health):
 
         print("\nYour available moves:")
         for i, move in enumerate(pokemon_data[player_pokemon]["moves"], 1):
-            print(f"{i}. {move}")
+            print(f"{i}. {move} (Power: {move_data[move]['power']}, Accuracy: {move_data[move]['accuracy']}%)")
         
         action = input("Choose a move or (R)un: ").strip().lower()
         if action.isdigit() and 1 <= int(action) <= len(pokemon_data[player_pokemon]["moves"]):
             chosen_move = pokemon_data[player_pokemon]["moves"][int(action) - 1]
+            move_stats = move_data[chosen_move]
             last_action_player = f"\n{player_nickname} used {chosen_move}!"
             
-            # Determine if the enemy dodges
-            if random.randint(1, 2) == 1:
-                enemy_health -= 4  # Fixed damage for now
+            # Check accuracy
+            if random.randint(1, 100) <= move_stats["accuracy"]:
+                damage = move_stats["power"] // 10  # Temporary flat damage calculation
+                enemy_health -= damage
                 if enemy_health <= 0:
                     last_action_player = f"\n🎉 {enemy_pokemon} fainted! You win! 🎉"
                     last_action_enemy = ""
@@ -178,18 +189,20 @@ def fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health):
                     msvcrt.getch()  # Wait for key press
                     return
             else:
-                last_action_player = f"\n{player_nickname} used {chosen_move}, but {enemy_pokemon} dodged it!"
+                last_action_player = f"\n{player_nickname} used {chosen_move}, but it missed!"
 
             # Enemy's turn
             if enemy_health > 0:
                 enemy_move = random.choice(pokemon_data[enemy_pokemon]["moves"])
+                move_stats = move_data[enemy_move]
                 last_action_enemy = f"\n{enemy_pokemon} used {enemy_move}!"
 
-                # Determine if the player dodges
-                if random.randint(1, 2) == 1:  # 50% chance to dodge
-                    last_action_enemy += f"\n🙌 {player_nickname} dodged the attack! 🙌"
+                # Check enemy move accuracy
+                if random.randint(1, 100) <= move_stats["accuracy"]:
+                    damage = move_stats["power"] // 10  # Temporary flat damage calculation
+                    player_health -= damage
                 else:
-                    player_health -= 4  # Fixed damage, but no unnecessary message
+                    last_action_enemy += f"\n🙌 {player_nickname} dodged the attack! 🙌"
 
         elif action == "r":
             last_action_player = f"\n🏃 {trainer_name} ran away safely! 🏃"
