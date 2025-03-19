@@ -7,6 +7,18 @@ import time  # For adding delays
 MAP_SIZE = 10
 player_pos = [MAP_SIZE // 2, MAP_SIZE // 2]
 
+game_map = [
+    "######################################",
+    "#  M       ______     C             #",
+    "#  |       |    |     |             #",
+    "#  |___D___|    |___D_|             #",
+    "#                                   #",
+    "#    :::::::::::::                  #",
+    "#    :::::::::::::                  #",
+    "#                                   #",
+    "#####################################"
+]
+
 # Define Pokémon data (moves, health, and ASCII art)
 pokemon_data = {
     "Bulbasaur": {
@@ -68,7 +80,7 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.31
+    Version 0.32
     """)
     msvcrt.getch()  # Wait for key press
 
@@ -110,15 +122,14 @@ def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_hea
 
 # Function for random Pokémon encounters
 def encounter_pokemon():
-    if random.randint(1, 5) == 1:  # 20% chance of encounter
-        enemy_pokemon = random.choice(pokemon_list)
-        
-        # Get player's health correctly
-        player_health = pokemon_data[player_pokemon]["max_health"]
-        enemy_health = pokemon_data[enemy_pokemon]["max_health"]
-        
-        fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health)
-
+    """Triggers a Pokémon battle only if the player is in tall grass (:)."""
+    x, y = player_pos
+    if game_map[y][x] == ":":  # Only trigger if standing on a Tall Grass tile
+        if random.randint(1, 5) == 1:  # 20% chance of an encounter
+            enemy_pokemon = random.choice(pokemon_list)
+            player_health = pokemon_data[player_pokemon]["max_health"]
+            enemy_health = pokemon_data[enemy_pokemon]["max_health"]
+            fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health)
 
 # Function to choose a starter Pokémon
 def choose_pokemon():
@@ -151,13 +162,34 @@ def choose_pokemon():
 # Function to display the game map
 def display_map():
     os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
-    for y in range(MAP_SIZE):
-        for x in range(MAP_SIZE):
+    for y, row in enumerate(game_map):
+        row_display = ""
+        for x, char in enumerate(row):
             if [x, y] == player_pos:
-                print("P", end=" ")  # Player character
+                row_display += "P"  # Player position
             else:
-                print(".", end=" ")  # Empty space
-        print()
+                row_display += char  # Default map tile
+        print(row_display)
+
+def move_player(direction):
+    x, y = player_pos
+    new_x, new_y = x, y  # Default to no movement
+
+    if direction == "w":
+        new_y -= 1
+    elif direction == "s":
+        new_y += 1
+    elif direction == "a":
+        new_x -= 1
+    elif direction == "d":
+        new_x += 1
+
+    # Ensure new position is within map bounds and not a wall
+    if 0 <= new_y < len(game_map) and 0 <= new_x < len(game_map[new_y]):
+        if game_map[new_y][new_x] not in ["|", "_", "#"]:  # Walls are solid
+            player_pos[0], player_pos[1] = new_x, new_y  # Move the player
+        else:
+            print("\n🚫 You can't walk through walls!\n")
 
 def initialize_pp(pokemon):
     """Returns a dictionary tracking PP for each move of the Pokémon."""
@@ -247,20 +279,12 @@ def main():
     trainer_name, player_pokemon, player_nickname = choose_pokemon()
     print(f"\n🌟 Your journey begins with {player_pokemon}! 🌟")
     msvcrt.getch()  # Wait for key press before starting
+
     while True:
         display_map()
         move = input("\nMove (W/A/S/D): ").strip().lower()
-        if move == "w" and player_pos[1] > 0:
-            player_pos[1] -= 1
-        elif move == "s" and player_pos[1] < MAP_SIZE - 1:
-            player_pos[1] += 1
-        elif move == "a" and player_pos[0] > 0:
-            player_pos[0] -= 1
-        elif move == "d" and player_pos[0] < MAP_SIZE - 1:
-            player_pos[0] += 1
-        else:
-            print("\nInvalid move.")
-        encounter_pokemon()
+        move_player(move)  # Move the player
+        encounter_pokemon()  # Check for wild Pokémon ONLY in grass
 
 if __name__ == "__main__":
     main()
