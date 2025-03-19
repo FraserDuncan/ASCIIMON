@@ -7,6 +7,14 @@ MAP_SIZE = 10
 player_pos = [MAP_SIZE // 2, MAP_SIZE // 2]
 pokemon_list = ["Pikachu", "Charmander", "Bulbasaur", "Squirtle"]
 
+# Define Pokémon moves
+pokemon_moves = {
+    "Bulbasaur": ["Tackle", "Vine Whip"],
+    "Charmander": ["Scratch", "Ember"],
+    "Squirtle": ["Tackle", "Water Gun"],
+    "Pikachu": ["Quick Attack", "Thunder Shock"]
+}
+
 # ASCII Art for Title Screen
 def display_title():
     os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
@@ -17,7 +25,7 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.11
+    Version 0.12
     """)
     msvcrt.getch()  # Wait for key press
 
@@ -81,14 +89,21 @@ def encounter_pokemon():
 # Function for battling a Pokémon
 def fight_pokemon(pokemon):
     while True:
-        action = input("Do you want to (A)ttack or (R)un? ").strip().lower()
-        if action == "a":
+        print("Your available moves:")
+        for i, move in enumerate(pokemon_moves[player_pokemon], 1):
+            print(f"{i}. {move}")
+        action = input("Choose a move or (R)un: ").strip().lower()
+        if action.isdigit() and 1 <= int(action) <= len(pokemon_moves[player_pokemon]):
+            chosen_move = pokemon_moves[player_pokemon][int(action) - 1]
+            print(f"Your {player_pokemon} used {chosen_move}!")
             if random.randint(1, 2) == 1:
                 print(f"You defeated {pokemon}!")
                 msvcrt.getch()  # Wait for key press
                 return
             else:
-                print(f"{pokemon} dodged your attack!")
+                print(f"{pokemon} dodged the attack!")
+                enemy_move = random.choice(pokemon_moves[pokemon])
+                print(f"{pokemon} used {enemy_move}!")
         elif action == "r":
             print("You ran away safely!")
             msvcrt.getch()  # Wait for key press
@@ -98,6 +113,7 @@ def fight_pokemon(pokemon):
 
 # Main game loop
 def main():
+    global player_pokemon
     display_title()
     player_pokemon = choose_pokemon()
     print(f"Your journey begins with {player_pokemon}!")
