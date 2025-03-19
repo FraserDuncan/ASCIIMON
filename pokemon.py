@@ -80,63 +80,9 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.33
+    Version 0.34
     """)
     msvcrt.getch()  # Wait for key press
-
-def get_movement_key():
-    """Waits for a single key press and returns the corresponding movement."""
-    key = msvcrt.getch().decode("utf-8").lower()  # Read key press instantly
-    if key in ["w", "a", "s", "d"]:
-        return key
-    return None  # Ignore invalid keys
-
-# Function to render health bars
-def render_health(name, health, max_health):
-    bar_length = 5  # Total number of blocks
-    filled_blocks = health // 4  # Each block represents 4 HP
-    empty_blocks = bar_length - filled_blocks
-    health_bar = "█" * filled_blocks + " " * empty_blocks
-    return f"{name}\n[{health_bar}] {health}/{max_health}\n"
-
-# Function to display Pokémon battle scene with health bars
-def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health, last_action_player, last_action_enemy):
-    os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
-    
-    # Show the last two moves at the top
-    print(f"{last_action_player}\n{last_action_enemy}\n")
-
-    # Use the player's custom Pokémon nickname instead of the default name
-    player_health_bar = render_health(player_nickname, player_health, pokemon_data[player_pokemon]["max_health"]).split("\n")
-    enemy_health_bar = render_health(enemy_pokemon, enemy_health, pokemon_data[enemy_pokemon]["max_health"]).split("\n")
-
-    player_art = pokemon_data[player_pokemon]["art"].split("\n")
-    enemy_art = pokemon_data[enemy_pokemon]["art"].split("\n")
-
-    # Print health bars first
-    for i in range(max(len(player_health_bar), len(enemy_health_bar))):
-        player_line = player_health_bar[i] if i < len(player_health_bar) else ""
-        enemy_line = enemy_health_bar[i] if i < len(enemy_health_bar) else ""
-        print(f"{player_line:<15}{' ' * 10}{enemy_line}")
-
-    print()
-
-    # Print Pokémon ASCII art
-    for i in range(max(len(player_art), len(enemy_art))):
-        player_line = player_art[i] if i < len(player_art) else ""
-        enemy_line = enemy_art[i] if i < len(enemy_art) else ""
-        print(f"{player_line:<15}{' ' * 10}{enemy_line}")
-
-# Function for random Pokémon encounters
-def encounter_pokemon():
-    """Triggers a Pokémon battle only if the player is in tall grass (:)."""
-    x, y = player_pos
-    if game_map[y][x] == ":":  # Only trigger if standing on a Tall Grass tile
-        if random.randint(1, 5) == 1:  # 20% chance of an encounter
-            enemy_pokemon = random.choice(pokemon_list)
-            player_health = pokemon_data[player_pokemon]["max_health"]
-            enemy_health = pokemon_data[enemy_pokemon]["max_health"]
-            fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health)
 
 # Function to choose a starter Pokémon
 def choose_pokemon():
@@ -178,6 +124,13 @@ def display_map():
                 row_display += char  # Default map tile
         print(row_display)
 
+def get_movement_key():
+    """Waits for a single key press and returns the corresponding movement."""
+    key = msvcrt.getch().decode("utf-8").lower()  # Read key press instantly
+    if key in ["w", "a", "s", "d"]:
+        return key
+    return None  # Ignore invalid keys
+
 def move_player(direction):
     x, y = player_pos
     new_x, new_y = x, y  # Default to no movement
@@ -195,8 +148,64 @@ def move_player(direction):
     if 0 <= new_y < len(game_map) and 0 <= new_x < len(game_map[new_y]):
         if game_map[new_y][new_x] not in ["|", "_", "#"]:  # Walls are solid
             player_pos[0], player_pos[1] = new_x, new_y  # Move the player
-        else:
-            print("\n🚫 You can't walk through walls!\n")
+            
+# Function to display the game map
+def display_map():
+    os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
+    for y, row in enumerate(game_map):
+        row_display = ""
+        for x, char in enumerate(row):
+            if [x, y] == player_pos:
+                row_display += "P"  # Player position
+            else:
+                row_display += char  # Default map tile
+        print(row_display)
+# Function for random Pokémon encounters
+def encounter_pokemon():
+    """Triggers a Pokémon battle only if the player is in tall grass (:)."""
+    x, y = player_pos
+    if game_map[y][x] == ":":  # Only trigger if standing on a Tall Grass tile
+        if random.randint(1, 5) == 1:  # 20% chance of an encounter
+            enemy_pokemon = random.choice(pokemon_list)
+            player_health = pokemon_data[player_pokemon]["max_health"]
+            enemy_health = pokemon_data[enemy_pokemon]["max_health"]
+            fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health)
+
+# Function to render health bars
+def render_health(name, health, max_health):
+    bar_length = 5  # Total number of blocks
+    filled_blocks = health // 4  # Each block represents 4 HP
+    empty_blocks = bar_length - filled_blocks
+    health_bar = "█" * filled_blocks + " " * empty_blocks
+    return f"{name}\n[{health_bar}] {health}/{max_health}\n"
+
+# Function to display Pokémon battle scene with health bars
+def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_health, last_action_player, last_action_enemy):
+    os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
+    
+    # Show the last two moves at the top
+    print(f"{last_action_player}\n{last_action_enemy}\n")
+
+    # Use the player's custom Pokémon nickname instead of the default name
+    player_health_bar = render_health(player_nickname, player_health, pokemon_data[player_pokemon]["max_health"]).split("\n")
+    enemy_health_bar = render_health(enemy_pokemon, enemy_health, pokemon_data[enemy_pokemon]["max_health"]).split("\n")
+
+    player_art = pokemon_data[player_pokemon]["art"].split("\n")
+    enemy_art = pokemon_data[enemy_pokemon]["art"].split("\n")
+
+    # Print health bars first
+    for i in range(max(len(player_health_bar), len(enemy_health_bar))):
+        player_line = player_health_bar[i] if i < len(player_health_bar) else ""
+        enemy_line = enemy_health_bar[i] if i < len(enemy_health_bar) else ""
+        print(f"{player_line:<15}{' ' * 10}{enemy_line}")
+
+    print()
+
+    # Print Pokémon ASCII art
+    for i in range(max(len(player_art), len(enemy_art))):
+        player_line = player_art[i] if i < len(player_art) else ""
+        enemy_line = enemy_art[i] if i < len(enemy_art) else ""
+        print(f"{player_line:<15}{' ' * 10}{enemy_line}")
 
 def initialize_pp(pokemon):
     """Returns a dictionary tracking PP for each move of the Pokémon."""
