@@ -59,7 +59,7 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.19
+    Version 0.20
     """)
     msvcrt.getch()  # Wait for key press
 
@@ -76,12 +76,14 @@ def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_hea
     os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
     print(f"🌿🔥💧⚡ A wild {enemy_pokemon} appeared! 🌿🔥💧⚡\n")
 
-    player_art = pokemon_data[player_pokemon]["art"].split("\n")
-    enemy_art = pokemon_data[enemy_pokemon]["art"].split("\n")
-    
-    player_health_bar = render_health(player_pokemon, player_health, pokemon_data[player_pokemon]["max_health"]).split("\n")
+    # Use the player's custom Pokémon nickname instead of the default name
+    player_health_bar = render_health(player_nickname, player_health, pokemon_data[player_pokemon]["max_health"]).split("\n")
     enemy_health_bar = render_health(enemy_pokemon, enemy_health, pokemon_data[enemy_pokemon]["max_health"]).split("\n")
 
+    player_art = pokemon_data[player_pokemon]["art"].split("\n")
+    enemy_art = pokemon_data[enemy_pokemon]["art"].split("\n")
+
+    # Print health bars first
     for i in range(max(len(player_health_bar), len(enemy_health_bar))):
         player_line = player_health_bar[i] if i < len(player_health_bar) else ""
         enemy_line = enemy_health_bar[i] if i < len(enemy_health_bar) else ""
@@ -89,6 +91,7 @@ def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_hea
 
     print("\n")
 
+    # Print Pokémon ASCII art
     for i in range(max(len(player_art), len(enemy_art))):
         player_line = player_art[i] if i < len(player_art) else ""
         enemy_line = enemy_art[i] if i < len(enemy_art) else ""
@@ -98,20 +101,37 @@ def display_battle_scene(player_pokemon, player_health, enemy_pokemon, enemy_hea
 def encounter_pokemon():
     if random.randint(1, 5) == 1:  # 20% chance of encounter
         enemy_pokemon = random.choice(pokemon_list)
+        
+        # Get player's health correctly
         player_health = pokemon_data[player_pokemon]["max_health"]
         enemy_health = pokemon_data[enemy_pokemon]["max_health"]
+        
         fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health)
+
 
 # Function to choose a starter Pokémon
 def choose_pokemon():
     os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
     starters = ["Bulbasaur", "Charmander", "Squirtle"]
+    
+    # Ask for the trainer's name
+    trainer_name = input("Enter your trainer name: ").strip()
+    print(f"\nWelcome, {trainer_name}! Your journey is about to begin!\n")
+    time.sleep(1)
+
     while True:
         print("Choose your starter Pokémon: Bulbasaur, Charmander, or Squirtle")
         choice = input("Enter your choice: ").strip().capitalize()
         if choice in starters:
-            print(f"You chose {choice}!")
-            return choice
+            print(f"\nYou chose {choice}!")
+            
+            # Ask for Pokémon nickname
+            nickname = input(f"Would you like to give your {choice} a nickname? (Press Enter to skip): ").strip()
+            if nickname == "":
+                nickname = choice  # Keep default name if no nickname is given
+            
+            print(f"\n{trainer_name}, your Pokémon {nickname} is ready for battle!")
+            return trainer_name, choice, nickname
         else:
             print("Invalid choice. Please select Bulbasaur, Charmander, or Squirtle.")
 
@@ -125,7 +145,7 @@ def display_map():
             else:
                 print(".", end=" ")  # Empty space
         print()
-        
+
 # Function to simulate a Pokémon battle
 def fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health):
     while player_health > 0 and enemy_health > 0:
@@ -177,9 +197,9 @@ def fight_pokemon(player_pokemon, player_health, enemy_pokemon, enemy_health):
 
 # Main game loop
 def main():
-    global player_pokemon
+    global player_pokemon, player_nickname, trainer_name
     display_title()
-    player_pokemon = choose_pokemon()
+    trainer_name, player_pokemon, player_nickname = choose_pokemon()
     print(f"\n🌟 Your journey begins with {player_pokemon}! 🌟")
     msvcrt.getch()  # Wait for key press before starting
     while True:
