@@ -1,6 +1,7 @@
 import random
 import os
 import msvcrt  # For Console.ReadKey equivalent in Windows
+import time  # For adding delays
 
 # Define the game map
 MAP_SIZE = 10
@@ -25,7 +26,7 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.12
+    Version 0.13
     """)
     msvcrt.getch()  # Wait for key press
 
@@ -96,12 +97,14 @@ def fight_pokemon(pokemon):
         if action.isdigit() and 1 <= int(action) <= len(pokemon_moves[player_pokemon]):
             chosen_move = pokemon_moves[player_pokemon][int(action) - 1]
             print(f"Your {player_pokemon} used {chosen_move}!")
+            time.sleep(2)  # Delay before result
             if random.randint(1, 2) == 1:
                 print(f"You defeated {pokemon}!")
                 msvcrt.getch()  # Wait for key press
                 return
             else:
                 print(f"{pokemon} dodged the attack!")
+                time.sleep(2)  # Delay before enemy move
                 enemy_move = random.choice(pokemon_moves[pokemon])
                 print(f"{pokemon} used {enemy_move}!")
         elif action == "r":
