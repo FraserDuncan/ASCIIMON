@@ -6,15 +6,44 @@ import time  # For adding delays
 # Define the game map
 MAP_SIZE = 10
 player_pos = [MAP_SIZE // 2, MAP_SIZE // 2]
-pokemon_list = ["Pikachu", "Charmander", "Bulbasaur", "Squirtle"]
 
-# Define Pokémon moves
-pokemon_moves = {
-    "Bulbasaur": ["Tackle", "Vine Whip"],
-    "Charmander": ["Scratch", "Ember"],
-    "Squirtle": ["Tackle", "Water Gun"],
-    "Pikachu": ["Quick Attack", "Thunder Shock"]
+# Define Pokémon data (moves & ASCII art)
+pokemon_data = {
+    "Bulbasaur": {
+        "moves": ["Tackle", "Vine Whip"],
+        "art": """
+          (\__/)
+          (o.o )
+          ( <🌱 )
+        """
+    },
+    "Charmander": {
+        "moves": ["Scratch", "Ember"],
+        "art": """
+          (\__/)
+          (o.o )
+          (>🔥)  
+        """
+    },
+    "Squirtle": {
+        "moves": ["Tackle", "Water Gun"],
+        "art": """
+          (\__/)
+          (o.o )
+          ( <💧 )
+        """
+    },
+    "Pikachu": {
+        "moves": ["Quick Attack", "Thunder Shock"],
+        "art": """
+          (\__/)
+          (o^.^)
+          (>⚡)
+        """
+    }
 }
+
+pokemon_list = list(pokemon_data.keys())  # List of available Pokémon
 
 # ASCII Art for Title Screen
 def display_title():
@@ -26,33 +55,29 @@ def display_title():
     ██╔══██║╚════██║██║     ██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║
     ██║  ██║███████║╚██████╗██║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
     ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-    Version 0.13
+    Version 0.16
     """)
     msvcrt.getch()  # Wait for key press
 
-# ASCII Art for Pokémon
-pokemon_ascii = {
-    "Pikachu": """
-      (\__/)
-      (o^.^)
-      (> <)
-    """,
-    "Charmander": """
-      (\__/)
-      (o.o )
-      (>🔥)
-    """,
-    "Bulbasaur": """
-      (\__/)
-      (o.o )
-      ( <🌱 )
-    """,
-    "Squirtle": """
-      (\__/)
-      (o.o )
-      ( <💧 )
-    """
-}
+# Function to display Pokémon battle scene
+def display_battle_scene(player_pokemon, enemy_pokemon):
+    os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
+    print(f"🌿🔥💧⚡ A wild {enemy_pokemon} appeared! 🌿🔥💧⚡\n")
+    
+    player_art = pokemon_data[player_pokemon]["art"].split("\n")
+    enemy_art = pokemon_data[enemy_pokemon]["art"].split("\n")
+    
+    for i in range(max(len(player_art), len(enemy_art))):
+        player_line = player_art[i] if i < len(player_art) else ""
+        enemy_line = enemy_art[i] if i < len(enemy_art) else ""
+        print(f"{player_line:<15}{' ' * 10}{enemy_line}")
+
+# Function for random Pokémon encounters
+def encounter_pokemon():
+    if random.randint(1, 5) == 1:  # 20% chance of encounter
+        enemy_pokemon = random.choice(pokemon_list)
+        display_battle_scene(player_pokemon, enemy_pokemon)
+        fight_pokemon(enemy_pokemon)
 
 # Function to choose a starter Pokémon
 def choose_pokemon():
@@ -78,52 +103,47 @@ def display_map():
                 print(".", end=" ")  # Empty space
         print()
 
-# Function for random Pokémon encounters
-def encounter_pokemon():
-    if random.randint(1, 5) == 1:  # 20% chance of encounter
-        pokemon = random.choice(pokemon_list)
-        os.system('cls' if os.name == 'nt' else 'clear')  # Clear screen
-        print(f"A wild {pokemon} appeared!")
-        print(pokemon_ascii[pokemon])
-        fight_pokemon(pokemon)
-
 # Function for battling a Pokémon
-def fight_pokemon(pokemon):
+def fight_pokemon(enemy_pokemon):
     while True:
-        print("Your available moves:")
-        for i, move in enumerate(pokemon_moves[player_pokemon], 1):
+        print("\nYour available moves:")
+        for i, move in enumerate(pokemon_data[player_pokemon]["moves"], 1):
             print(f"{i}. {move}")
+        
         action = input("Choose a move or (R)un: ").strip().lower()
-        if action.isdigit() and 1 <= int(action) <= len(pokemon_moves[player_pokemon]):
-            chosen_move = pokemon_moves[player_pokemon][int(action) - 1]
-            print(f"Your {player_pokemon} used {chosen_move}!")
+        if action.isdigit() and 1 <= int(action) <= len(pokemon_data[player_pokemon]["moves"]):
+            chosen_move = pokemon_data[player_pokemon]["moves"][int(action) - 1]
+            print(f"\nYour {player_pokemon} used {chosen_move}!")
             time.sleep(2)  # Delay before result
+            
             if random.randint(1, 2) == 1:
-                print(f"You defeated {pokemon}!")
+                print(f"\n🎉 You defeated {enemy_pokemon}! 🎉")
                 msvcrt.getch()  # Wait for key press
                 return
             else:
-                print(f"{pokemon} dodged the attack!")
+                print(f"\n{enemy_pokemon} dodged the attack!")
                 time.sleep(2)  # Delay before enemy move
-                enemy_move = random.choice(pokemon_moves[pokemon])
-                print(f"{pokemon} used {enemy_move}!")
+                
+                enemy_move = random.choice(pokemon_data[enemy_pokemon]["moves"])
+                print(f"{enemy_pokemon} used {enemy_move}!")
+
         elif action == "r":
-            print("You ran away safely!")
+            print("\n🏃 You ran away safely! 🏃")
             msvcrt.getch()  # Wait for key press
             return
         else:
-            print("Invalid choice.")
+            print("\nInvalid choice. Try again.")
 
 # Main game loop
 def main():
     global player_pokemon
     display_title()
     player_pokemon = choose_pokemon()
-    print(f"Your journey begins with {player_pokemon}!")
+    print(f"\n🌟 Your journey begins with {player_pokemon}! 🌟")
     msvcrt.getch()  # Wait for key press before starting
     while True:
         display_map()
-        move = input("Move (W/A/S/D): ").strip().lower()
+        move = input("\nMove (W/A/S/D): ").strip().lower()
         if move == "w" and player_pos[1] > 0:
             player_pos[1] -= 1
         elif move == "s" and player_pos[1] < MAP_SIZE - 1:
@@ -133,7 +153,7 @@ def main():
         elif move == "d" and player_pos[0] < MAP_SIZE - 1:
             player_pos[0] += 1
         else:
-            print("Invalid move.")
+            print("\nInvalid move.")
         encounter_pokemon()
 
 if __name__ == "__main__":
